@@ -129,9 +129,28 @@ const unmuteTarget = async (issuer: GuildMember | APIInteractionGuildMember, tar
     }
 }
 
+const kickTarget = async (issuer: GuildMember | APIInteractionGuildMember, target: GuildMember, reason: string, client: Client): Promise<{ message: string; type: "SUCCESS" | "ERROR" | "INFO" }> => {
+    try {
+        const bot = client.guilds.cache.get(target.guild.id)!.members.cache.get(client.user!.id)
+        if (!memberInteract(bot!, target)) {
+            return { message: `I do not have permission to kick ${target}`, type: "ERROR" }
+        }
+        if(!target.kickable) return { message: `I do not have permission to kick ${target}`, type: "ERROR" }
+        await target.kick(reason)
+        return { message: `${target} has been kicked for Reason: ${reason}`, type: "SUCCESS" }
+    } catch (err) {
+        console.log(err)
+        return {
+            message: `<@${target}> could not be kicked due to \n > ${err}`, type: "ERROR"
+        }
+    }
+}
+
+
 export {
     banTarget,
     unbanTarget,
     muteTarget,
-    unmuteTarget
+    unmuteTarget,
+    kickTarget
 }
