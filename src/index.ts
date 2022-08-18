@@ -1,9 +1,10 @@
 require('dotenv').config()
-const { BOT_TOKEN } = process.env
+const { BOT_TOKEN, MONGO_URI } = process.env
 import { Collection, GatewayIntentBits } from 'discord.js'
 const { Client } = require('discord.js')
 import * as fs from 'fs'
 import * as path from 'path'
+const mongoose = require('mongoose')
 
 const client = new Client({
     intents: [GatewayIntentBits.Guilds,
@@ -32,7 +33,16 @@ functionFolders.forEach((folder) => {
     })
 })
 
-    
+const initializeMongoose = async () => {
+    await mongoose.connect(MONGO_URI, {
+        keepAlive: true,
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+    })
+    console.log("Connected to mongoDB")
+}
+
+initializeMongoose()
 
 
 client.handleEvents()

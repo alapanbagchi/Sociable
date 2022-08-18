@@ -11,7 +11,8 @@ const config = {
         CONTEXT: true,
         GLOBAL: false,
         TEST_GUILD_ID: '995777966674038854',
-    }
+    },
+    CACHE_SIZE: 100
 }
 
 export { config }

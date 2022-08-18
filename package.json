@@ -23,7 +23,8 @@
     "dotenv": "^16.0.1",
     "glob": "^8.0.3",
     "logger": "^0.0.1",
-    "moment": "^2.29.4"
+    "moment": "^2.29.4",
+    "mongoose": "^6.5.2"
   },
   "devDependencies": {
     "concurrently": "^7.3.0",

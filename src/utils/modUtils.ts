@@ -1,5 +1,6 @@
 import { APIInteractionGuildMember, Client, Guild, GuildMember, GuildMemberManager } from "discord.js";
-import { embed } from "./botUtils";
+import { getSettings } from "../schemas/Guild";
+import { getMember } from "../schemas/Member";
 
 
 const logModeration = () => {
@@ -53,7 +54,49 @@ const unbanTarget = async (guild: Guild, issuer: GuildMember | APIInteractionGui
 }
 
 const muteTarget = async (issuer: GuildMember | APIInteractionGuildMember, target: GuildMember, time: number, duration: string, reason: string, client: Client): Promise<{ message: string; type: "SUCCESS" | "ERROR" | "INFO" }> => {
-    return { message: `I do not have permission to ban ${target}`, type: "ERROR" }
+    console.log(time)
+
+    try {
+        const bot = client.guilds.cache.get(target.guild.id)!.members.cache.get(client.user!.id)
+        if (!memberInteract(bot!, target)) {
+            return { message: `I do not have permission to ban ${target}`, type: "ERROR" }
+        }
+        //If the member is in a voice channel disconnect them from the channel
+        if (target.voice.channel) target.voice.disconnect(reason)
+
+        const settings = await getSettings(target.guild)
+        console.log(settings.mutedRole)
+        if (!settings.mutedRole) return { message: `Mute role not set`, type: "ERROR" }
+
+        const mutedRole = target.guild.roles.cache.get(settings.mutedRole)
+        if (!mutedRole) return { message: `Mute role not found`, type: "ERROR" }
+
+        //Check if the member has the muted role
+        if (target.roles.cache.has(mutedRole.id)) {
+            return { message: `${target} is already muted`, type: "ERROR" }
+        } else {
+            //Add the muted role to the member
+            await target.roles.add(mutedRole)
+            const memberDB = await getMember(target.guild, target)
+            memberDB.mute.active = true
+            let t = new Date()
+            if (time != -1) {
+                memberDB.mute.unmutedAt = t.setSeconds(t.getSeconds() + time / 1000)
+                setTimeout(() => {
+                    target.roles.remove(mutedRole)
+                }, time)
+            } else {
+                memberDB.mute.unmutedAt = null
+            }
+            await memberDB.save()
+            return { message: `${target} has been muted.  Duration: ${duration == 'undefinedundefined' ? 'Permanent' : duration}, Reason: ${reason}`, type: "SUCCESS" }
+        }
+    } catch (err) {
+        console.log(err)
+        return {
+            message: `<@${target}> could not be muted due to \n > ${err}`, type: "ERROR"
+        }
+    }
 }
 
 export {
