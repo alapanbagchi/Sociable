@@ -3,6 +3,7 @@ import { ApplicationCommandOptionType, GuildMember, Message, User } from "discor
 import { embed } from "../../utils/botUtils";
 import { muteTarget } from "../../utils/modUtils";
 import { resolveMember } from "../../utils/guildUtils";
+
 const timeParser = (time: string) => {
     const duration = time.slice(0, -1)
     const durationType = time.slice(-1)

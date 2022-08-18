@@ -83,7 +83,7 @@ const muteTarget = async (issuer: GuildMember | APIInteractionGuildMember, targe
             if (time != -1) {
                 memberDB.mute.unmutedAt = t.setSeconds(t.getSeconds() + time / 1000)
                 setTimeout(() => {
-                    target.roles.remove(mutedRole)
+                    unmuteTarget(bot!, target, 'Mute Duration Ended', client)
                 }, time)
             } else {
                 memberDB.mute.unmutedAt = null
@@ -99,8 +99,39 @@ const muteTarget = async (issuer: GuildMember | APIInteractionGuildMember, targe
     }
 }
 
+const unmuteTarget = async (issuer: GuildMember | APIInteractionGuildMember, target: GuildMember, reason: string, client: Client): Promise<{ message: string; type: "SUCCESS" | "ERROR" | "INFO" }> => {
+
+    try {
+        const bot = client.guilds.cache.get(target.guild.id)!.members.cache.get(client.user!.id)
+        if (!memberInteract(bot!, target)) {
+            return { message: `I do not have permission to ban ${target}`, type: "ERROR" }
+        }
+        const memberDB = await getMember(target.guild, target)
+        let settings = await getSettings(target.guild)
+        if (!settings.mutedRole) return { message: `Mute role not set`, type: "ERROR" }
+        let role = target.guild.roles.cache.get(settings.mutedRole)
+        if (!role) return { message: `Mute role not found`, type: "ERROR" }
+        if (!memberDB.mute?.active && !target.roles.cache.has(role.id)) {
+            return { message: `${target} is not muted`, type: "ERROR" }
+        }
+        if (target.roles.cache.has(role.id)) {
+            await target.roles.remove(role)
+        }
+        memberDB.mute.active = false
+        memberDB.mute.unmutedAt = null
+        await memberDB.save()
+        return { message: `${target} has been unmuted`, type: "SUCCESS" }
+    } catch (err) {
+        console.log(err)
+        return {
+            message: `<@${target}> could not be unmuted due to \n > ${err}`, type: "ERROR"
+        }
+    }
+}
+
 export {
     banTarget,
     unbanTarget,
-    muteTarget
+    muteTarget,
+    unmuteTarget
 }
