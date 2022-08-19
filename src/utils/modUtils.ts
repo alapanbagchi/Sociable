@@ -1,14 +1,7 @@
-import { APIInteractionGuildMember, Client, Guild, GuildMember, GuildMemberManager } from "discord.js";
+import { APIInteractionGuildMember, Client, Guild, GuildMember, Collection, Message, Channel, GuildChannel, TextChannel, TextBasedChannel } from "discord.js";
 import { getSettings } from "../schemas/Guild";
 import { getMember } from "../schemas/Member";
-
-
-const logModeration = () => {
-
-}
-
-
-
+import { containsLink } from "./miscUtils";
 
 const memberInteract = async (issuer: GuildMember, target: GuildMember) => {
 
@@ -135,7 +128,7 @@ const kickTarget = async (issuer: GuildMember | APIInteractionGuildMember, targe
         if (!memberInteract(bot!, target)) {
             return { message: `I do not have permission to kick ${target}`, type: "ERROR" }
         }
-        if(!target.kickable) return { message: `I do not have permission to kick ${target}`, type: "ERROR" }
+        if (!target.kickable) return { message: `I do not have permission to kick ${target}`, type: "ERROR" }
         await target.kick(reason)
         return { message: `${target} has been kicked for Reason: ${reason}`, type: "SUCCESS" }
     } catch (err) {
@@ -146,11 +139,54 @@ const kickTarget = async (issuer: GuildMember | APIInteractionGuildMember, targe
     }
 }
 
+const purgeMessages = async (issuer: GuildMember | APIInteractionGuildMember, channel: TextChannel, type: 'ALL' | 'ATTACHMENT' | 'BOT' | 'LINK' | 'USER' | 'TOKEN', amount: number, argument?: GuildMember | string): Promise<{ message: string; type: "SUCCESS" | "ERROR" | "INFO" }> => {
+    const toDelete: Collection<string, Message> = new Collection()
+    try {
+        const messages = await channel.messages.fetch({
+            limit: amount
+        })
+        for (const message of messages.values()) {
+            if (toDelete.size >= amount) break
+            if (!message.deletable) continue
+            if (type === 'ALL') {
+                toDelete.set(message.id, message)
+            } else if (type === 'ATTACHMENT') {
+                if (message.attachments.size > 0)
+                    toDelete.set(message.id, message)
+            } else if(type === 'TOKEN'){
+                if(message.content.includes(argument as string)){
+                    toDelete.set(message.id, message)
+                }
+            } 
+            else if (type === 'BOT') {
+                if (message.author.bot)
+                    toDelete.set(message.id, message)
+            } else if (type === 'LINK') {
+                if (containsLink(message.content))
+                    toDelete.set(message.id, message)
+            } else if (type === 'USER') {
+                if (typeof (argument) != 'string') {
+                    if (message.author.id === argument!.id) {
+                        toDelete.set(message.id, message)
+                    }
+                }
+            }
+        }
+        const deletedMessages = await channel.bulkDelete(toDelete, true)
+        return { message: `${deletedMessages.size} messages deleted`, type: "SUCCESS" }
+    } catch (err) {
+        console.log(err)
+        return {
+            message: `Could not purge messages due to \n > ${err}`, type: "ERROR"
+        }
+    }
+}
 
 export {
     banTarget,
     unbanTarget,
     muteTarget,
     unmuteTarget,
-    kickTarget
+    kickTarget,
+    purgeMessages
 }

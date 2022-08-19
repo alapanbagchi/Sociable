@@ -1,4 +1,4 @@
-import {ApplicationCommandData, ChatInputCommandInteraction, Interaction, Message} from 'discord.js'
+import {ApplicationCommandData, Channel, ChannelType, ChatInputCommandInteraction, GuildChannel, Interaction, Message} from 'discord.js'
 
 
 
@@ -30,6 +30,7 @@ interface SlashCommandOptions{
     required:boolean,
     options?:SlashCommandOptions[],
     choices?:{name:string, value:string}[]
+    channelTypes?:ChannelType[],
 }
 
 interface CommandData{
