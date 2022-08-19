@@ -3,8 +3,23 @@ import * as mongoose from 'mongoose'
 
 const cache = new Map()
 
-const Schema = new mongoose.Schema({
-    id: {
+interface GuildSchema {
+    _id: string,
+    data: {
+        name: string,
+        owner: {
+            id: string,
+            tag: string
+        },
+        joinedAt: Date,
+        leftAt: Date,
+    },
+    mutedRole: string,
+    moderatorRoles: string[]
+}
+
+const Schema = new mongoose.Schema<GuildSchema>({
+    _id: {
         type: String,
         required: true,
     },
@@ -17,23 +32,21 @@ const Schema = new mongoose.Schema({
         joinedAt: Date,
         leftAt: Date
     },
-    mutedRole: String
+    mutedRole: String,
+    moderatorRoles: [String],
 })
 const Model = mongoose.model("guild", Schema);
 type GuildType = mongoose.InferSchemaType<typeof Schema>
 
 // Gets the guild details from the database
-const getSettings = async (guild: Guild): Promise<GuildType> => {
+const getSettings = async (guild: Guild): Promise<mongoose.Document<unknown, any, GuildSchema> & GuildSchema> => {
     if (cache.has(guild.id)) return cache.get(guild.id)
-
-    let guildData = await Model.findOne({
-        id: guild.id
-    })
+    let guildData = await Model.findById(guild.id)
 
     //If the guild is not in the database, create a new entry for it
     if (!guildData) {
         guildData = new Model({
-            id: guild.id,
+            _id: guild.id,
             data: {
                 name: guild.name,
                 joinedAt: guild.joinedAt,

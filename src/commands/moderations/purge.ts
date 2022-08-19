@@ -9,9 +9,33 @@ const PurgeCommand: CommandData = {
     category: "MODERATION",
     commandInfo: {
         enabled: true,
-        minArgs: 1,
+        minArgs: 2,
         aliases: [],
         subcommands: [
+            {
+                trigger:"all <limit>",
+                description: "Purges all messages from the channel",
+            },
+            {
+                trigger:"user <user> <limit>",
+                description: "Purges all messages from the user",
+            },
+            {
+               trigger:"token <token> <limit>",
+                description: "Purges all messages from the token",
+            },
+            {
+                trigger: "link <limit>",
+                description: "Purges all messages from the link",
+            },
+            {
+                trigger: 'attachment <limit>',
+                description: "Purges all messages with attachments",
+            },
+            {
+                trigger: 'bot <limit>',
+                description: "Purges all messages from bots"
+            }
         ],
         usage: '<ID|@member> [reason]'
     },
