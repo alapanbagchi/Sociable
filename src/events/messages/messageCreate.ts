@@ -35,12 +35,10 @@ const executeCommands = (message: Message, client: any) => {
         if (!message.member?.permissions.has("Administrator"))
             return message.channel.send({ embeds: [embed('You have to be an Administrator to run this command', 'ERROR')] })
     }
-
-    //If the command is of an OWNER category check if the sender is the bot owner and if not show an error
-
     if (command.category === "MODERATION") {
         if (!message.member?.permissions.has("Administrator")) {
             if (settings.moderatorRoles.length === 0) return message.channel.send({ embeds: [embed("Moderation Roles have not been configured for this server. Please do so before using moderation commands", "INFO")] })
+            if (!message.member?.roles.cache.some(role => settings.moderatorRoles.includes(role.id))) return message.channel.send({ embeds: [embed("You need moderator privilages to run this command", "ERROR")] })
         }
     }
 

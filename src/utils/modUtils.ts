@@ -1,4 +1,4 @@
-import { APIInteractionGuildMember, Client, Guild, GuildMember, Collection, Message, Channel, GuildChannel, TextChannel, TextBasedChannel } from "discord.js";
+import { APIInteractionGuildMember, Client, Guild, GuildMember, Collection, Message, Channel, GuildChannel, TextChannel, TextBasedChannel, VoiceChannel } from "discord.js";
 import { getSettings } from "../schemas/Guild";
 import { getMember } from "../schemas/Member";
 import { containsLink } from "./miscUtils";
@@ -153,11 +153,11 @@ const purgeMessages = async (issuer: GuildMember | APIInteractionGuildMember, ch
             } else if (type === 'ATTACHMENT') {
                 if (message.attachments.size > 0)
                     toDelete.set(message.id, message)
-            } else if(type === 'TOKEN'){
-                if(message.content.includes(argument as string)){
+            } else if (type === 'TOKEN') {
+                if (message.content.includes(argument as string)) {
                     toDelete.set(message.id, message)
                 }
-            } 
+            }
             else if (type === 'BOT') {
                 if (message.author.bot)
                     toDelete.set(message.id, message)
@@ -182,11 +182,124 @@ const purgeMessages = async (issuer: GuildMember | APIInteractionGuildMember, ch
     }
 }
 
+const voiceMute = async (issuer: GuildMember | APIInteractionGuildMember, target: GuildMember, reason: string, client: Client): Promise<{ message: string; type: "SUCCESS" | "ERROR" | "INFO" }> => {
+    try {
+        const bot = client.guilds.cache.get(target.guild.id)!.members.cache.get(client.user!.id)
+        if (!memberInteract(bot!, target)) {
+            return { message: `I do not have permission to mute ${target}`, type: "ERROR" }
+        }
+        if (!target.voice.channel) return { message: `${target} is not in a voice channel`, type: "ERROR" }
+        if (target.voice.serverMute) return { message: `${target} is already voice muted`, type: "ERROR" }
+        await target.voice.setMute(true, reason)
+        return { message: `${target} has been voice muted`, type: "SUCCESS" }
+    } catch (err) {
+        console.log(err)
+        return {
+            message: `<@${target}> could not be voice muted due to \n > ${err}`, type: "ERROR"
+        }
+    }
+}
+
+const voiceUnmute = async (issuer: GuildMember | APIInteractionGuildMember, target: GuildMember, reason: string, client: Client): Promise<{ message: string; type: "SUCCESS" | "ERROR" | "INFO" }> => {
+    try {
+        const bot = client.guilds.cache.get(target.guild.id)!.members.cache.get(client.user!.id)
+        if (!memberInteract(bot!, target)) {
+            return { message: `I do not have permission to unmute ${target}`, type: "ERROR" }
+        }
+        if (!target.voice.channel) return { message: `${target} is not in a voice channel`, type: "ERROR" }
+        if (!target.voice.serverMute) return { message: `${target} is not voice muted`, type: "ERROR" }
+        await target.voice.setMute(false, reason)
+        return { message: `${target} has been voice unmuted`, type: "SUCCESS" }
+    } catch (err) {
+        console.log(err)
+        return {
+            message: `<@${target}> could not be voice unmuted due to \n > ${err}`, type: "ERROR"
+        }
+    }
+}
+
+const deafen = async (issuer: GuildMember | APIInteractionGuildMember, target: GuildMember, reason: string, client: Client): Promise<{ message: string; type: "SUCCESS" | "ERROR" | "INFO" }> => {
+    try {
+        const bot = client.guilds.cache.get(target.guild.id)!.members.cache.get(client.user!.id)
+        if (!memberInteract(bot!, target)) {
+            return { message: `I do not have permission to deafen ${target}`, type: "ERROR" }
+        }
+        if (!target.voice.channel) return { message: `${target} is not in a voice channel`, type: "ERROR" }
+        if (target.voice.serverDeaf) return { message: `${target} is already deafened`, type: "ERROR" }
+        await target.voice.setDeaf(true, reason)
+        return { message: `${target} has been deafened`, type: "SUCCESS" }
+    } catch (err) {
+        console.log(err)
+        return {
+            message: `<@${target}> could not be deafened due to \n > ${err}`, type: "ERROR"
+        }
+    }
+}
+
+const undeafen = async (issuer: GuildMember | APIInteractionGuildMember, target: GuildMember, reason: string, client: Client): Promise<{ message: string; type: "SUCCESS" | "ERROR" | "INFO" }> => {
+    try {
+        const bot = client.guilds.cache.get(target.guild.id)!.members.cache.get(client.user!.id)
+        if (!memberInteract(bot!, target)) {
+            return { message: `I do not have permission to undeafen ${target}`, type: "ERROR" }
+        }
+        if (!target.voice.channel) return { message: `${target} is not in a voice channel`, type: "ERROR" }
+        if (!target.voice.serverDeaf) return { message: `${target} is not deafened`, type: "ERROR" }
+        await target.voice.setDeaf(false, reason)
+        return { message: `${target} has been undeafened`, type: "SUCCESS" }
+    } catch (err) {
+        console.log(err)
+        return {
+            message: `<@${target}> could not be undeafened due to \n > ${err}`, type: "ERROR"
+        }
+    }
+}
+
+const moveVC = async (issuer: GuildMember | APIInteractionGuildMember, target: GuildMember, channel: VoiceChannel, reason: string, client: Client): Promise<{ message: string; type: "SUCCESS" | "ERROR" | "INFO" }> => {
+    try {
+        const bot = client.guilds.cache.get(target.guild.id)!.members.cache.get(client.user!.id)
+        if (!memberInteract(bot!, target)) {
+            return { message: `I do not have permission to move ${target}`, type: "ERROR" }
+        }
+        if (!target.voice.channel) return { message: `${target} is not in a voice channel`, type: "ERROR" }
+        if (target.voice.channel.id === channel.id) return { message: `${target} is already in ${channel}`, type: "ERROR" }
+        await target.voice.setChannel(channel, reason)
+        return { message: `${target} has been moved to ${channel}`, type: "SUCCESS" }
+    } catch (err) {
+        console.log(err)
+        return {
+            message: `<@${target}> could not be moved to ${channel} due to \n > ${err}`, type: "ERROR"
+        }
+    }
+}
+
+const disconnectVC = async (issuer: GuildMember | APIInteractionGuildMember, target: GuildMember, reason: string, client: Client): Promise<{ message: string; type: "SUCCESS" | "ERROR" | "INFO" }> => {
+    try {
+        const bot = client.guilds.cache.get(target.guild.id)!.members.cache.get(client.user!.id)
+        if (!memberInteract(bot!, target)) {
+            return { message: `I do not have permission to kick ${target}`, type: "ERROR" }
+        }
+        if (!target.voice.channel) return { message: `${target} is not in a voice channel`, type: "ERROR" }
+        await target.voice.disconnect(reason)
+        return { message: `${target} has been kicked from the voice channel`, type: "SUCCESS" }
+    } catch (err) {
+        console.log(err)
+        return {
+            message: `<@${target}> could not be kicked from the voice channel due to \n > ${err}`, type: "ERROR"
+        }
+    }
+}
+
 export {
     banTarget,
     unbanTarget,
     muteTarget,
     unmuteTarget,
     kickTarget,
-    purgeMessages
+    purgeMessages,
+    voiceMute,
+    voiceUnmute,
+    deafen,
+    undeafen,
+    moveVC,
+    disconnectVC
 }

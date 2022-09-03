@@ -1,6 +1,6 @@
-import CommandData from "@root/src/typings/Commands";
-import { permissionExtract } from "../../utils/botUtils";
-import { ChatInputCommandInteraction, GuildMemberRoleManager, Interaction, PermissionFlagsBits, Permissions, PermissionsBitField } from "discord.js";
+import CommandData from "../../../src/typings/Commands";
+import { embed, permissionExtract } from "../../utils/botUtils";
+import { ChatInputCommandInteraction, GuildMemberRoleManager, Interaction, PermissionFlagsBits, Permissions, PermissionsBitField, RoleResolvable } from "discord.js";
 
 const settingsDummy = {
     moderatorRoles: ["1003052041695932416"]
@@ -21,7 +21,7 @@ module.exports = {
                 console.error(err)
                 await interaction.reply({
                     content: `Something went wrong while executing the command`,
-                    ephemeral: true
+                    ephemeral: command.slashCommand.ephemeral
                 })
             }
         }
@@ -30,30 +30,35 @@ module.exports = {
 
 const executeInteractions = (interaction: ChatInputCommandInteraction, client: any) => {
     const command: CommandData = client.commands.get(interaction.commandName)
+    if (!interaction.member && interaction.member == null) return interaction.reply({ content: "You are not a member of this server", ephemeral: true })
+    if (typeof (interaction.member.permissions) === "string") return interaction.reply({ content: "Something went wrong while checking your permissions", ephemeral: true })
+    const memberRoles = interaction.member.roles as GuildMemberRoleManager
     if (command.category === "ADMIN") {
-        if (!interaction.member?.permissions.has(PermissionFlagsBits.Administrator)) {
+        if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
             return interaction.reply({
                 content: `You have to be an Administrator to run this command`,
                 ephemeral: true
             })
         }
     }
-
     if (command.category === "MODERATION") {
         if (!interaction.member?.permissions.has(PermissionFlagsBits.Administrator)) {
             if (settingsDummy.moderatorRoles.length === 0)
                 return interaction.reply({
-                    content: `Moderation Roles have not been configured for this server. Please do so before using moderation commands`,
+                    embeds: [embed("Moderation Roles have not been configured for this server. Please do so before using moderation commands", "ERROR")],
                     ephemeral: true
                 })
+            if (!memberRoles.cache.some(role => settingsDummy.moderatorRoles.includes(role.id))) return interaction.reply({
+                embeds: [embed("You do not have the required permissions to run this command", "ERROR")],
+                ephemeral: true
+            })
         }
     }
+
     if (command.rolePermissions.length > 0 && !interaction.member?.permissions.has(PermissionFlagsBits.Administrator)) {
-        //The cache property exists on member.roles
-        //@ts-ignore
-        if (!command.rolePermissions.some((role: any) => interaction.member?.roles.cache.has(role))) {
+        if (!command.rolePermissions.some((role: string) => memberRoles.cache.has(role))) {
             return interaction.reply({
-                content: `You don't have the required roles to use this command`,
+                embeds:[embed("You do not have the required permissions to run this command", "ERROR")],
                 ephemeral: true
             })
         }

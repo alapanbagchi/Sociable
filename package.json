@@ -4,7 +4,9 @@
   "description": "",
   "main": "./dist/index.js",
   "scripts": {
-    "dev": "concurrently  \"nodemon ./dist/*\" \"tsc -w\""
+    "start:dev": "nodemon",
+    "start": "npm run build && node dist/index.js",
+    "build": "rimraf ./dist && tsc"
   },
   "repository": {
     "type": "git",
