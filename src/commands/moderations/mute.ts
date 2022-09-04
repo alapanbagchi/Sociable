@@ -123,12 +123,9 @@ const MuteCommand: CommandData = {
         await message.channel.send({ embeds: [embed(response.message, response.type)] })
     },
     async interactionRun(interaction) {
-        //Get the target
         const user = interaction.options.getUser("target")
         if (!user) return interaction.reply({ embeds: [embed("Invalid user", "ERROR")] })
         const target = await interaction.guild?.members.fetch(user.id)
-
-        //Get the reason, unit and time
         const reason = interaction.options.getString("reason") || 'No reason provided'
         let time = interaction.options.getNumber("duration") || -1
         const unit = interaction.options.getString("unit") || 's'
@@ -146,6 +143,7 @@ const MuteCommand: CommandData = {
         }
         //If time is not provided set time to -1 or else set the time to the duration * durationMultiplier * 1000
         time = time === -1 ? -1 : duration * durationMultiplier * 1000
+        
         const response = await muteTarget(interaction.member as GuildMember, target as GuildMember, time, `${duration}${durationType}`, reason, interaction.client)
         interaction.reply({ embeds: [embed(response.message, response.type)] })
     }

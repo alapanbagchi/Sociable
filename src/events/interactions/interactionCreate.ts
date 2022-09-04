@@ -49,7 +49,7 @@ const executeInteractions = (interaction: ChatInputCommandInteraction, client: a
                     ephemeral: true
                 })
             if (!memberRoles.cache.some(role => settingsDummy.moderatorRoles.includes(role.id))) return interaction.reply({
-                embeds: [embed("You do not have the required permissions to run this command", "ERROR")],
+                embeds: [embed("You need moderator privilages to run this command ", "ERROR")],
                 ephemeral: true
             })
         }

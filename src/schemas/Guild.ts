@@ -15,7 +15,8 @@ interface GuildSchema {
         leftAt: Date,
     },
     mutedRole: string,
-    moderatorRoles: string[]
+    moderatorRoles: string[],
+    modLogChannel: string,
 }
 
 const Schema = new mongoose.Schema<GuildSchema>({
@@ -34,6 +35,7 @@ const Schema = new mongoose.Schema<GuildSchema>({
     },
     mutedRole: String,
     moderatorRoles: [String],
+    modLogChannel: String
 })
 const Model = mongoose.model("guild", Schema);
 type GuildType = mongoose.InferSchemaType<typeof Schema>

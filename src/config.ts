@@ -4,6 +4,8 @@ const config = {
         SUCCESS: "#008E44",
         ERROR: "#A62019",
         INFO: "#0099E1",
+        LOGS: "0xA968F2",
+        DMEMBED: "0xA968F2"
     },
     OWNER_ID: ['800051082309926922'],
     INTERACTONS: {
