@@ -14,9 +14,13 @@ interface GuildSchema {
         joinedAt: Date,
         leftAt: Date,
     },
+    automod: {
+        bannedWords: Boolean
+    },
     mutedRole: string,
     moderatorRoles: string[],
     modLogChannel: string,
+    bannedWords: string[],
 }
 
 const Schema = new mongoose.Schema<GuildSchema>({
@@ -33,9 +37,13 @@ const Schema = new mongoose.Schema<GuildSchema>({
         joinedAt: Date,
         leftAt: Date
     },
+    automod: {
+        bannedWords: Boolean
+    },
     mutedRole: String,
     moderatorRoles: [String],
-    modLogChannel: String
+    modLogChannel: String,
+    bannedWords: [String]
 })
 const Model = mongoose.model("guild", Schema);
 type GuildType = mongoose.InferSchemaType<typeof Schema>
