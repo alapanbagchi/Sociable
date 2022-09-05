@@ -3,6 +3,7 @@ import { Message } from 'discord.js'
 import { config } from '../../config'
 import { embed } from '../../utils/botUtils'
 import {guildSettings} from '../../dummydata'
+import { automodHandler } from '../../utils/automodUtils'
 
 const settings = guildSettings
 
@@ -12,6 +13,7 @@ module.exports = {
     execute(message: Message, client: any) {
         if (message.author.bot) return
         executeCommands(message, client)
+        automodHandler(message, client)
     }
 }
 

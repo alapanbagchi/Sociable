@@ -15,7 +15,8 @@ interface GuildSchema {
         leftAt: Date,
     },
     automod: {
-        bannedWords: Boolean
+        bannedWords: Boolean,
+        bannedWordsAllowedRoles: string[],
     },
     mutedRole: string,
     moderatorRoles: string[],
@@ -38,7 +39,8 @@ const Schema = new mongoose.Schema<GuildSchema>({
         leftAt: Date
     },
     automod: {
-        bannedWords: Boolean
+        bannedWords: Boolean,
+        bannedWordsAllowedRoles: [String]
     },
     mutedRole: String,
     moderatorRoles: [String],

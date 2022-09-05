@@ -1,4 +1,4 @@
-import { Guild, Role } from "discord.js";
+import { APIRole, Guild, Role } from "discord.js";
 import { SysEmbed } from "../typings/utils";
 import { getSettings } from "../schemas/Guild";
 
@@ -35,12 +35,12 @@ const moderatorConfig = async (action: 'ADD' | 'REMOVE' | 'LIST', guild: Guild, 
     }
 }
 
-const bannedWords = async (action: 'ADD' | 'REMOVE' | 'LIST' | 'TOGGLE', guild: Guild, args?: string): Promise<SysEmbed> => {
+const bannedWords = async (action: 'ADD' | 'REMOVE' | 'LIST' | 'TOGGLE' | 'ALLOWEDROLES', guild: Guild, args?: any): Promise<SysEmbed> => {
     const settings = await getSettings(guild)
     if (action == 'ADD') {
         //Seperate words by comma and remove any spaces
-        const wordArray = args!.split(',').map(word => word.trim())
-        wordArray.forEach(word => {
+        const wordArray = args!.split(',').map((word:any) => word.trim())
+        wordArray.forEach((word:any) => {
             if (settings.bannedWords?.includes(word)) {
                 wordArray.splice(wordArray.indexOf(word), 1)
                 return {
@@ -58,9 +58,10 @@ const bannedWords = async (action: 'ADD' | 'REMOVE' | 'LIST' | 'TOGGLE', guild: 
 
     }
     if (action == 'REMOVE') {
+        args = args as string
         //Seperate words by comma and remove any spaces
-        const wordArray = args!.split(',').map(word => word.trim())
-        wordArray.forEach(word => {
+        const wordArray = args!.split(',').map((word:any) => word.trim())
+        wordArray.forEach((word:any) => {
             if (!settings.bannedWords?.includes(word)) {
                 wordArray.splice(wordArray.indexOf(word), 1)
                 return {
@@ -72,7 +73,7 @@ const bannedWords = async (action: 'ADD' | 'REMOVE' | 'LIST' | 'TOGGLE', guild: 
         })
         await settings.save()
         return {
-            message: `Removed ${args} from the banned words list`,
+            message: `Removed ${wordArray.join(', ')} from the list banned words.`,
             type: 'SUCCESS'
         }
     }
@@ -94,6 +95,48 @@ const bannedWords = async (action: 'ADD' | 'REMOVE' | 'LIST' | 'TOGGLE', guild: 
         return {
             message: `Banned words automoderation has been ${settings.automod.bannedWords ? 'enabled' : 'disabled'}`,
             type: 'SUCCESS'
+        }
+    }
+    if(action == 'ALLOWEDROLES') {
+        if(args === 'LIST') {
+            let result = ''
+            settings.automod.bannedWordsAllowedRoles?.length > 0 ? settings.automod.bannedWordsAllowedRoles.forEach(role => {
+                result += `${guild.roles.cache.get(role)} `
+            }) : result = 'No allowed roles'
+        } else if(args === 'ADD'){
+            //Add one role at a time
+            const role = guild.roles.cache.find(role => role.name === args)
+            if(!role) return {
+                message: `Role ${args} not found.`,
+                type: 'ERROR'
+            }
+            if(settings.automod.bannedWordsAllowedRoles?.includes(role.id)) return {
+                message: `${role} is already an allowed role.`,
+                type: 'ERROR'
+            }
+            settings.automod.bannedWordsAllowedRoles.push(role.id)
+            await settings.save()
+            return {
+                message: `Added ${role} as an allowed role.`,
+                type: 'SUCCESS'
+            }
+        } else if(args === 'REMOVE') {
+            //Remove one role at a time
+            const role = guild.roles.cache.find(role => role.name === args)
+            if(!role) return {
+                message: `Role ${args} not found.`,
+                type: 'ERROR'
+            }
+            if(!settings.automod.bannedWordsAllowedRoles?.includes(role.id)) return {
+                message: `${role} is not an allowed role.`,
+                type: 'ERROR'
+            }
+            settings.automod.bannedWordsAllowedRoles.splice(settings.automod.bannedWordsAllowedRoles.indexOf(role.id), 1)
+            await settings.save()
+            return {
+                message: `Removed ${role} as an allowed role.`,
+                type: 'SUCCESS'
+            }
         }
     }
     return {

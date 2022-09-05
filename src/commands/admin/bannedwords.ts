@@ -83,11 +83,20 @@ const KickCommand: CommandData = {
                 options: [
                 ],
                 required: false
-            }
+            },
         ]
     },
     async messageRun(message, args) {
-
+        const action = args.shift()?.toUpperCase()
+        await message.delete()
+        if (!['ADD', 'REMOVE', 'LIST', 'TOGGLE'].includes(action!)) return message.channel.send(
+            {
+                embeds: [embed(`Invalid action. Valid actions are: \`add\`, \`remove\`, \`list\`, \`toggle\``, 'ERROR')]
+            }
+        )
+        if (!message.guild) return
+        const result = await bannedWords(action, message.guild, args.join(' '))
+        return message.channel.send({ embeds: [embed(result.message, result.type)] })
     },
     async interactionRun(interaction) {
         const subcommand = interaction.options.getSubcommand()
@@ -102,7 +111,7 @@ const KickCommand: CommandData = {
         } else if (subcommand == 'list') {
             const result = await bannedWords('LIST', interaction.guild!)
             interaction.reply({ embeds: [embed(result.message, result.type)] })
-        } else{
+        } else if(subcommand == 'toggle') {
             const action = interaction.options.getString('action', true)
             const result = await bannedWords("TOGGLE", interaction.guild!, action)
             interaction.reply({ embeds: [embed(result.message, result.type)] })
