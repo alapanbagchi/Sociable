@@ -1,8 +1,6 @@
 import CommandData from "../../typings/Commands";
-import { resolveMember } from "../../utils/guildUtils";
 import { ApplicationCommandOptionType } from "discord.js";
 import { embed } from "../../utils/botUtils";
-import { banTarget, kickTarget } from "../../utils/modUtils";
 import { bannedWords } from "../../utils/adminUtils";
 
 const KickCommand: CommandData = {
@@ -84,12 +82,48 @@ const KickCommand: CommandData = {
                 ],
                 required: false
             },
+            {
+                name: "allowedrolesadd",
+                description: "Add roles that are allowed to use banned words",
+                type: ApplicationCommandOptionType.Subcommand,
+                options: [
+                    {
+                        name: "role",
+                        description: "The roles to add",
+                        type: ApplicationCommandOptionType.Role,
+                        required: true
+                    }
+                ],
+                required: false
+            },
+            {
+                name: "allowedrolesremove",
+                description: "Remove roles that are allowed to use banned words",
+                type: ApplicationCommandOptionType.Subcommand,
+                options: [
+                    {
+                        name: "role",
+                        description: "The roles to remove",
+                        type: ApplicationCommandOptionType.Role,
+                        required: true
+                    }
+                ],
+                required: false
+            },
+            {
+                name: "allowedroleslist",
+                description: "List the roles that are allowed to use banned words",
+                type: ApplicationCommandOptionType.Subcommand,
+                options: [
+                ],
+                required: false
+            }
         ]
     },
     async messageRun(message, args) {
         const action = args.shift()?.toUpperCase()
         await message.delete()
-        if (!['ADD', 'REMOVE', 'LIST', 'TOGGLE'].includes(action!)) return message.channel.send(
+        if (!['ADD', 'REMOVE', 'LIST', 'TOGGLE', 'ALLOWEDROLESADD', 'ALLOWEDROLESREMOVE', 'ALLOWEDROLESLIST'].includes(action!)) return message.channel.send(
             {
                 embeds: [embed(`Invalid action. Valid actions are: \`add\`, \`remove\`, \`list\`, \`toggle\``, 'ERROR')]
             }
@@ -111,9 +145,20 @@ const KickCommand: CommandData = {
         } else if (subcommand == 'list') {
             const result = await bannedWords('LIST', interaction.guild!)
             interaction.reply({ embeds: [embed(result.message, result.type)] })
-        } else if(subcommand == 'toggle') {
+        } else if (subcommand == 'toggle') {
             const action = interaction.options.getString('action', true)
             const result = await bannedWords("TOGGLE", interaction.guild!, action)
+            interaction.reply({ embeds: [embed(result.message, result.type)] })
+        } else if (subcommand == 'allowedrolesadd') {
+            const roles = interaction.options.getRole('role', true)
+            const result = await bannedWords('ALLOWEDROLESADD', interaction.guild!, roles)
+            interaction.reply({ embeds: [embed(result.message, result.type)] })
+        } else if (subcommand == 'allowedrolesremove') {
+            const roles = interaction.options.getRole('role', true)
+            const result = await bannedWords('ALLOWEDROLESREMOVE', interaction.guild!, roles)
+            interaction.reply({ embeds: [embed(result.message, result.type)] })
+        } else if (subcommand == 'allowedroleslist') {
+            const result = await bannedWords('ALLOWEDROLESLIST', interaction.guild!)
             interaction.reply({ embeds: [embed(result.message, result.type)] })
         }
     }

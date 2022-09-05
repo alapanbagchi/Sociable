@@ -8,6 +8,8 @@ const bannedWordsController = async (message: Message, client: any) => {
         if (!message.guild) return
         const settings = await getSettings(message.guild)
         if (settings.bannedWords?.length > 0 && settings.automod.bannedWords) {
+            const allowedRoles = settings.automod.bannedWordsAllowedRoles
+            if (message.member?.roles.cache.some(role => allowedRoles?.includes(role.id))) return
             settings.bannedWords.forEach(async word => {
                 //Wildcard after the end of the word
                 if (word.endsWith('*')) {
